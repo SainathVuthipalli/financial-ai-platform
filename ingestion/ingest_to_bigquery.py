@@ -1,29 +1,39 @@
 from google.cloud import bigquery
 import yfinance as yf
-import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Project config
 PROJECT_ID = "financial-ai-platform-sv"
 DATASET_ID = "raw_market_data"
 TABLE_ID = "market_data_raw"
 
-# Your watchlist - same as SweepScanner
+# Watchlist
 SYMBOLS = [
     "AAPL", "MSFT", "NVDA", "TSLA", "SPY",
     "QQQ", "AMZN", "META", "GOOGL", "AMD",
     "NFLX", "PLTR", "COIN", "HOOD", "MSTR"
 ]
 
+SCHEMA = [
+    bigquery.SchemaField("symbol", "STRING", mode="REQUIRED"),
+    bigquery.SchemaField("timestamp", "TIMESTAMP", mode="REQUIRED"),
+    bigquery.SchemaField("open", "FLOAT64"),
+    bigquery.SchemaField("high", "FLOAT64"),
+    bigquery.SchemaField("low", "FLOAT64"),
+    bigquery.SchemaField("close", "FLOAT64"),
+    bigquery.SchemaField("volume", "INT64"),
+    bigquery.SchemaField("ingested_at", "TIMESTAMP"),
+]
+
 def fetch_market_data(symbol: str) -> list:
     try:
         ticker = yf.Ticker(symbol)
         hist = ticker.history(period="1d", interval="5m")
-        
+
         if hist.empty:
             print(f"  No data for {symbol}")
             return []
-        
+
         records = []
         for ts, row in hist.iterrows():
             records.append({
@@ -34,45 +44,38 @@ def fetch_market_data(symbol: str) -> list:
                 "low": round(float(row["Low"]), 4),
                 "close": round(float(row["Close"]), 4),
                 "volume": int(row["Volume"]),
-                "ingested_at": datetime.utcnow().isoformat()
+                "ingested_at": datetime.now(timezone.utc).isoformat(),
             })
         return records
     except Exception as e:
         print(f"  Error fetching {symbol}: {e}")
         return []
 
-def create_table_if_not_exists(client: bigquery.Client):
-    dataset_ref = client.dataset(DATASET_ID)
-    
-    # Create dataset if not exists
+def create_dataset_and_table(client: bigquery.Client):
+    # Create dataset
+    dataset_ref = bigquery.Dataset(f"{PROJECT_ID}.{DATASET_ID}")
+    dataset_ref.location = "US"
     try:
         client.get_dataset(dataset_ref)
+        print(f"Dataset {DATASET_ID} already exists")
     except Exception:
-        dataset = bigquery.Dataset(dataset_ref)
-        dataset.location = "US"
-        client.create_dataset(dataset)
+        client.create_dataset(dataset_ref)
         print(f"Created dataset {DATASET_ID}")
 
-    # Define schema
-    schema = [
-        bigquery.SchemaField("symbol", "STRING"),
-        bigquery.SchemaField("timestamp", "STRING"),
-        bigquery.SchemaField("open", "FLOAT"),
-        bigquery.SchemaField("high", "FLOAT"),
-        bigquery.SchemaField("low", "FLOAT"),
-        bigquery.SchemaField("close", "FLOAT"),
-        bigquery.SchemaField("volume", "INTEGER"),
-        bigquery.SchemaField("ingested_at", "STRING"),
-    ]
-
-    table_ref = dataset_ref.table(TABLE_ID)
+    # Create table with partitioning
+    table_ref = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
     try:
         client.get_table(table_ref)
         print(f"Table {TABLE_ID} already exists")
     except Exception:
-        table = bigquery.Table(table_ref, schema=schema)
+        table = bigquery.Table(table_ref, schema=SCHEMA)
+        table.time_partitioning = bigquery.TimePartitioning(
+            type_=bigquery.TimePartitioningType.DAY,
+            field="timestamp"
+        )
+        table.clustering_fields = ["symbol"]
         client.create_table(table)
-        print(f"Created table {TABLE_ID}")
+        print(f"Created partitioned table {TABLE_ID}")
 
 def load_to_bigquery(records: list, client: bigquery.Client):
     table_ref = f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}"
@@ -85,10 +88,8 @@ def load_to_bigquery(records: list, client: bigquery.Client):
 def main():
     print("Starting ingestion...")
     client = bigquery.Client(project=PROJECT_ID)
-    
-    # Create dataset + table if first run
-    create_table_if_not_exists(client)
-    
+    create_dataset_and_table(client)
+
     total = 0
     for symbol in SYMBOLS:
         print(f"Fetching {symbol}...")
@@ -96,7 +97,7 @@ def main():
         if records:
             load_to_bigquery(records, client)
             total += len(records)
-    
+
     print(f"\nDone. Total rows loaded: {total}")
 
 if __name__ == "__main__":
