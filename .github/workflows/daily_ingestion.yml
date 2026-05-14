@@ -1,0 +1,32 @@
+name: Daily Market Data Ingestion
+
+on:
+  schedule:
+    - cron: '35 14 * * 1-5'  # 9:35 AM ET = 14:35 UTC, weekdays only
+  workflow_dispatch:           # allows manual trigger from GitHub
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install google-cloud-bigquery yfinance pandas pytz
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Run ingestion
+        run: |
+          python ingestion/ingest_to_bigquery.py
