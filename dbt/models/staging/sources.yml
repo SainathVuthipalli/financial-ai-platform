@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw_market_data
+    project: financial-ai-platform-sv
+    dataset: raw_market_data
+    tables:
+      - name: market_data_raw
+        description: "Raw OHLCV market data ingested from yfinance"

@@ -1,0 +1,22 @@
+version: 2
+
+models:
+  - name: stg_market_data
+    description: "Cleaned and enriched OHLCV market data"
+    columns:
+      - name: symbol
+        description: "Stock ticker symbol"
+        tests:
+          - not_null
+      - name: timestamp
+        description: "Bar timestamp"
+        tests:
+          - not_null
+      - name: volume
+        description: "Trade volume"
+        tests:
+          - not_null
+      - name: close
+        description: "Closing price"
+        tests:
+          - not_null
