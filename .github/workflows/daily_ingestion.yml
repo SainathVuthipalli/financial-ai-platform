@@ -30,3 +30,7 @@ jobs:
       - name: Run ingestion
         run: |
           python ingestion/ingest_to_bigquery.py
+
+      - name: Run data quality checks
+        run: |
+          python monitoring/data_quality.py
