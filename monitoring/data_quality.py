@@ -1,4 +1,3 @@
-import great_expectations as gx
 from google.cloud import bigquery
 import pandas as pd
 from datetime import datetime, timezone
