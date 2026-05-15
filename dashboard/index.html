@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Financial AI Platform</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e1a; color: #e2e8f0; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .app { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr; height: 100vh; gap: 1px; background: #1a2035; }
+  .header { grid-column: 1/-1; background: #0d1117; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #1e3a5f; }
+  .header h1 { font-size: 16px; font-weight: 600; color: #38bdf8; letter-spacing: 2px; text-transform: uppercase; }
+  .badge { background: #0f3460; color: #38bdf8; padding: 4px 10px; border-radius: 4px; font-size: 11px; border: 1px solid #1e5f8e; }
+  .panel { background: #0d1117; padding: 20px; overflow-y: auto; }
+  .panel-title { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; }
+  .signal-card { background: #111827; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s; }
+  .signal-card:hover { border-color: #38bdf8; }
+  .signal-card.bullish { border-left: 3px solid #10b981; }
+  .signal-card.bearish { border-left: 3px solid #ef4444; }
+  .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .symbol { font-size: 14px; font-weight: 700; color: #f1f5f9; }
+  .date { font-size: 11px; color: #475569; }
+  .signal-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .stat { background: #0a0e1a; border-radius: 4px; padding: 6px 8px; }
+  .stat-label { font-size: 9px; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
+  .stat-value { font-size: 12px; color: #e2e8f0; margin-top: 2px; }
+  .stat-value.green { color: #10b981; }
+  .stat-value.red { color: #ef4444; }
+  .stat-value.blue { color: #38bdf8; }
+  .ml-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 3px; font-size: 10px; margin-top: 8px; }
+  .ml-badge.strong { background: #052e16; color: #10b981; border: 1px solid #166534; }
+  .ml-badge.normal { background: #0f172a; color: #64748b; border: 1px solid #1e293b; }
+  .chat-panel { display: flex; flex-direction: column; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; }
+  .message { margin-bottom: 16px; }
+  .message.user .bubble { background: #1e3a5f; border-radius: 6px 6px 0 6px; margin-left: auto; max-width: 80%; padding: 10px 14px; font-size: 13px; color: #bae6fd; }
+  .message.assistant .bubble { background: #111827; border: 1px solid #1e293b; border-radius: 6px 6px 6px 0; max-width: 90%; padding: 12px 14px; font-size: 13px; line-height: 1.6; color: #e2e8f0; white-space: pre-wrap; }
+  .chat-input { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e293b; }
+  .chat-input input { flex: 1; background: #111827; border: 1px solid #1e293b; border-radius: 4px; padding: 10px 14px; color: #e2e8f0; font-family: inherit; font-size: 13px; outline: none; }
+  .chat-input input:focus { border-color: #38bdf8; }
+  .chat-input button { background: #1e3a5f; color: #38bdf8; border: 1px solid #1e5f8e; border-radius: 4px; padding: 10px 18px; cursor: pointer; font-family: inherit; font-size: 13px; }
+  .chat-input button:hover { background: #2d5a8e; }
+  .chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .loading { color: #475569; font-size: 12px; padding: 8px 0; }
+  .quick-btn { background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 6px 12px; font-size: 11px; color: #64748b; cursor: pointer; margin: 4px 4px 4px 0; font-family: inherit; }
+  .quick-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+  .empty { color: #475569; font-size: 12px; text-align: center; padding: 40px 0; }
+  .prob-bar { height: 3px; background: #1e293b; border-radius: 2px; margin-top: 6px; }
+  .prob-fill { height: 100%; border-radius: 2px; background: #38bdf8; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const API = "http://localhost:8000";
+
+const QUICK_QUESTIONS = [
+  "Which symbols had the highest percentage change?",
+  "Which stocks were bullish with high volume?",
+  "What was NVDA doing recently?",
+  "Which symbols look most volatile?",
+];
+
+function SignalCard({ signal }) {
+  const bullish = signal.avg_pct_change > 0;
+  return (
+    <div className={`signal-card ${bullish ? "bullish" : "bearish"}`}>
+      <div className="signal-header">
+        <span className="symbol">{signal.symbol}</span>
+        <span className="date">{signal.trade_date}</span>
+      </div>
+      <div className="signal-stats">
+        <div className="stat">
+          <div className="stat-label">Change</div>
+          <div className={`stat-value ${bullish ? "green" : "red"}`}>
+            {bullish ? "+" : ""}{signal.avg_pct_change?.toFixed(4)}%
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Volume</div>
+          <div className={`stat-value ${signal.avg_volume > 1000000 ? "blue" : ""}`}>
+            {(signal.avg_volume / 1000).toFixed(0)}K
+          </div>
+        </div>
+        <div className="stat">
+          <div className="stat-label">Range</div>
+          <div className="stat-value">
+            ${signal.day_low?.toFixed(0)}–${signal.day_high?.toFixed(0)}
+          </div>
+        </div>
+      </div>
+      {signal.probability !== undefined && (
+        <>
+          <div className={`ml-badge ${signal.prediction === "strong move expected" ? "strong" : "normal"}`}>
+            ◆ ML: {(signal.probability * 100).toFixed(0)}% {signal.prediction}
+          </div>
+          <div className="prob-bar">
+            <div className="prob-fill" style={{ width: `${signal.probability * 100}%` }} />
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  const [signals, setSignals] = React.useState([]);
+  const [messages, setMessages] = React.useState([
+    { role: "assistant", text: "Welcome to Financial AI Platform. I can answer questions about market signals, volume patterns, and ML predictions. Try a question below." }
+  ]);
+  const [input, setInput] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [loadingSignals, setLoadingSignals] = React.useState(true);
+  const messagesEndRef = React.useRef(null);
+
+  React.useEffect(() => {
+    fetch(`${API}/api/signals`)
+      .then(r => r.json())
+      .then(data => { setSignals(data); setLoadingSignals(false); })
+      .catch(() => setLoadingSignals(false));
+  }, []);
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const ask = async (question) => {
+    if (!question.trim() || loading) return;
+    setMessages(m => [...m, { role: "user", text: question }]);
+    setInput("");
+    setLoading(true);
+    try {
+      const res = await fetch(`${API}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question })
+      });
+      const data = await res.json();
+      setMessages(m => [...m, { role: "assistant", text: data.answer }]);
+    } catch {
+      setMessages(m => [...m, { role: "assistant", text: "Error connecting to backend. Make sure the server is running." }]);
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="app">
+      <div className="header">
+        <h1>⬡ Financial AI Platform</h1>
+        <div style={{ display: "flex", gap: 8 }}>
+          <span className="badge">GCP + BigQuery</span>
+          <span className="badge">Claude RAG</span>
+          <span className="badge">ML Predictions</span>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-title">Live Signal Feed — {signals.length} signals</div>
+        {loadingSignals && <div className="loading">Loading signals from BigQuery...</div>}
+        {signals.map((s, i) => <SignalCard key={i} signal={s} />)}
+      </div>
+
+      <div className="panel chat-panel">
+        <div className="panel-title">AI Market Analyst — RAG + ML</div>
+        <div className="chat-messages">
+          {messages.map((m, i) => (
+            <div key={i} className={`message ${m.role}`}>
+              <div className="bubble">{m.text}</div>
+            </div>
+          ))}
+          {loading && <div className="loading">◆ Analyzing signals...</div>}
+          <div ref={messagesEndRef} />
+        </div>
+        <div style={{ marginBottom: 8 }}>
+          {QUICK_QUESTIONS.map((q, i) => (
+            <button key={i} className="quick-btn" onClick={() => ask(q)}>{q}</button>
+          ))}
+        </div>
+        <div className="chat-input">
+          <input
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && ask(input)}
+            placeholder="Ask about market signals..."
+          />
+          <button onClick={() => ask(input)} disabled={loading}>Send</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
