@@ -47,9 +47,17 @@
   .loading { color: #475569; font-size: 12px; padding: 8px 0; }
   .quick-btn { background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 6px 12px; font-size: 11px; color: #64748b; cursor: pointer; margin: 4px 4px 4px 0; font-family: inherit; }
   .quick-btn:hover { border-color: #38bdf8; color: #38bdf8; }
-  .empty { color: #475569; font-size: 12px; text-align: center; padding: 40px 0; }
   .prob-bar { height: 3px; background: #1e293b; border-radius: 2px; margin-top: 6px; }
   .prob-fill { height: 100%; border-radius: 2px; background: #38bdf8; }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid #1e293b; margin-bottom: 16px; }
+  .tab { padding: 8px 16px; font-size: 11px; color: #475569; cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase; letter-spacing: 1px; }
+  .tab.active { color: #38bdf8; border-bottom-color: #38bdf8; }
+  .forecast-card { background: #111827; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; margin-bottom: 10px; }
+  .forecast-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #0a0e1a; font-size: 12px; }
+  .forecast-row:last-child { border-bottom: none; }
+  .symbol-select { background: #111827; border: 1px solid #1e293b; border-radius: 4px; padding: 8px 12px; color: #e2e8f0; font-family: inherit; font-size: 12px; width: 100%; margin-bottom: 12px; }
+  .range-bar { height: 4px; background: #1e293b; border-radius: 2px; margin-top: 4px; position: relative; }
+  .range-fill { height: 100%; border-radius: 2px; background: #38bdf8; position: absolute; }
 </style>
 </head>
 <body>
@@ -67,7 +75,7 @@ const QUICK_QUESTIONS = [
 function SignalCard({ signal }) {
   const bullish = signal.avg_pct_change > 0;
   return (
-    <div className={`signal-card ${bullish ? "bullish" : "bearish"}`}>
+    <div className={"signal-card " + (bullish ? "bullish" : "bearish")}>
       <div className="signal-header">
         <span className="symbol">{signal.symbol}</span>
         <span className="date">{signal.trade_date}</span>
@@ -75,32 +83,93 @@ function SignalCard({ signal }) {
       <div className="signal-stats">
         <div className="stat">
           <div className="stat-label">Change</div>
-          <div className={`stat-value ${bullish ? "green" : "red"}`}>
-            {bullish ? "+" : ""}{signal.avg_pct_change?.toFixed(4)}%
+          <div className={"stat-value " + (bullish ? "green" : "red")}>
+            {bullish ? "+" : ""}{signal.avg_pct_change && signal.avg_pct_change.toFixed(4)}%
           </div>
         </div>
         <div className="stat">
           <div className="stat-label">Volume</div>
-          <div className={`stat-value ${signal.avg_volume > 1000000 ? "blue" : ""}`}>
-            {(signal.avg_volume / 1000).toFixed(0)}K
+          <div className={"stat-value " + (signal.avg_volume > 1000000 ? "blue" : "")}>
+            {signal.avg_volume && (signal.avg_volume / 1000).toFixed(0)}K
           </div>
         </div>
         <div className="stat">
           <div className="stat-label">Range</div>
           <div className="stat-value">
-            ${signal.day_low?.toFixed(0)}–${signal.day_high?.toFixed(0)}
+            ${signal.day_low && signal.day_low.toFixed(0)}-${signal.day_high && signal.day_high.toFixed(0)}
           </div>
         </div>
       </div>
       {signal.probability !== undefined && (
-        <>
-          <div className={`ml-badge ${signal.prediction === "strong move expected" ? "strong" : "normal"}`}>
-            ◆ ML: {(signal.probability * 100).toFixed(0)}% {signal.prediction}
+        <div>
+          <div className={"ml-badge " + (signal.prediction === "strong move expected" ? "strong" : "normal")}>
+            ML: {(signal.probability * 100).toFixed(0)}% {signal.prediction}
           </div>
           <div className="prob-bar">
-            <div className="prob-fill" style={{ width: `${signal.probability * 100}%` }} />
+            <div className="prob-fill" style={{width: (signal.probability * 100) + "%"}}></div>
           </div>
-        </>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForecastPanel() {
+  const [symbols, setSymbols] = React.useState([]);
+  const [selected, setSelected] = React.useState("NVDA");
+  const [forecasts, setForecasts] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(function() {
+    fetch(API + "/api/forecast-symbols")
+      .then(function(r) { return r.json(); })
+      .then(function(data) { setSymbols(data); });
+  }, []);
+
+  React.useEffect(function() {
+    if (!selected) return;
+    setLoading(true);
+    fetch(API + "/api/forecasts/" + selected)
+      .then(function(r) { return r.json(); })
+      .then(function(data) { setForecasts(data); setLoading(false); });
+  }, [selected]);
+
+  const minPrice = forecasts.length ? Math.min.apply(null, forecasts.map(function(f) { return f.lower_bound || 0; })) : 0;
+  const maxPrice = forecasts.length ? Math.max.apply(null, forecasts.map(function(f) { return f.upper_bound || 0; })) : 0;
+
+  return (
+    <div>
+      <select className="symbol-select" value={selected} onChange={function(e) { setSelected(e.target.value); }}>
+        {symbols.map(function(s) { return <option key={s} value={s}>{s}</option>; })}
+      </select>
+      {loading && <div className="loading">Loading forecast...</div>}
+      {forecasts.length > 0 && (
+        <div className="forecast-card">
+          <div style={{fontSize: 11, color: "#64748b", marginBottom: 12}}>
+            Prophet 7-day forecast - trained on 1yr daily bars
+          </div>
+          {forecasts.map(function(f, i) {
+            const bullish = f.trend === "bullish";
+            const rangeWidth = maxPrice - minPrice;
+            const fillLeft = rangeWidth > 0 ? ((f.lower_bound - minPrice) / rangeWidth * 100) : 0;
+            const fillWidth = rangeWidth > 0 ? ((f.upper_bound - f.lower_bound) / rangeWidth * 100) : 0;
+            return (
+              <div key={i} className="forecast-row">
+                <span style={{color: "#475569", minWidth: 80}}>{f.forecast_date}</span>
+                <span style={{color: bullish ? "#10b981" : "#ef4444", minWidth: 20}}>{bullish ? "▲" : "▼"}</span>
+                <span style={{color: "#e2e8f0", minWidth: 70}}>${f.predicted_close && f.predicted_close.toFixed(2)}</span>
+                <div style={{flex: 1, marginLeft: 12}}>
+                  <div style={{fontSize: 10, color: "#475569"}}>
+                    ${f.lower_bound && f.lower_bound.toFixed(0)} - ${f.upper_bound && f.upper_bound.toFixed(0)}
+                  </div>
+                  <div className="range-bar">
+                    <div className="range-fill" style={{left: fillLeft + "%", width: fillWidth + "%"}}></div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -109,91 +178,118 @@ function SignalCard({ signal }) {
 function App() {
   const [signals, setSignals] = React.useState([]);
   const [messages, setMessages] = React.useState([
-    { role: "assistant", text: "Welcome to Financial AI Platform. I can answer questions about market signals, volume patterns, and ML predictions. Try a question below." }
+    {role: "assistant", text: "Welcome to Financial AI Platform. Ask me about market signals, volume patterns, and ML predictions."}
   ]);
   const [input, setInput] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [loadingSignals, setLoadingSignals] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState("signals");
   const messagesEndRef = React.useRef(null);
 
-  React.useEffect(() => {
-    fetch(`${API}/api/signals`)
-      .then(r => r.json())
-      .then(data => { setSignals(data); setLoadingSignals(false); })
-      .catch(() => setLoadingSignals(false));
+  React.useEffect(function() {
+    fetch(API + "/api/signals")
+      .then(function(r) { return r.json(); })
+      .then(function(data) { setSignals(data); setLoadingSignals(false); })
+      .catch(function() { setLoadingSignals(false); });
   }, []);
 
-  React.useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  React.useEffect(function() {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({behavior: "smooth"});
+    }
   }, [messages]);
 
-  const ask = async (question) => {
+  function ask(question) {
     if (!question.trim() || loading) return;
-    setMessages(m => [...m, { role: "user", text: question }]);
+    setMessages(function(m) { return m.concat([{role: "user", text: question}]); });
     setInput("");
     setLoading(true);
-    try {
-      const res = await fetch(`${API}/api/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question })
+    fetch(API + "/api/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({question: question})
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        setMessages(function(m) { return m.concat([{role: "assistant", text: data.answer}]); });
+        setLoading(false);
+      })
+      .catch(function() {
+        setMessages(function(m) { return m.concat([{role: "assistant", text: "Error connecting to backend."}]); });
+        setLoading(false);
       });
-      const data = await res.json();
-      setMessages(m => [...m, { role: "assistant", text: data.answer }]);
-    } catch {
-      setMessages(m => [...m, { role: "assistant", text: "Error connecting to backend. Make sure the server is running." }]);
-    }
-    setLoading(false);
-  };
+  }
 
   return (
     <div className="app">
       <div className="header">
-        <h1>⬡ Financial AI Platform</h1>
-        <div style={{ display: "flex", gap: 8 }}>
-          <span className="badge">GCP + BigQuery</span>
+        <h1>Financial AI Platform</h1>
+        <div style={{display: "flex", gap: 8}}>
+          <span className="badge">135 Symbols</span>
+          <span className="badge">Prophet Forecasts</span>
           <span className="badge">Claude RAG</span>
-          <span className="badge">ML Predictions</span>
         </div>
       </div>
 
       <div className="panel">
-        <div className="panel-title">Live Signal Feed — {signals.length} signals</div>
-        {loadingSignals && <div className="loading">Loading signals from BigQuery...</div>}
-        {signals.map((s, i) => <SignalCard key={i} signal={s} />)}
+        <div className="tabs">
+          <div className={"tab " + (activeTab === "signals" ? "active" : "")} onClick={function() { setActiveTab("signals"); }}>
+            Live Signals
+          </div>
+          <div className={"tab " + (activeTab === "forecast" ? "active" : "")} onClick={function() { setActiveTab("forecast"); }}>
+            7-Day Forecast
+          </div>
+        </div>
+
+        {activeTab === "signals" && (
+          <div>
+            <div className="panel-title">{signals.length} signals from BigQuery</div>
+            {loadingSignals && <div className="loading">Loading...</div>}
+            {signals.map(function(s, i) { return <SignalCard key={i} signal={s} />; })}
+          </div>
+        )}
+
+        {activeTab === "forecast" && (
+          <div>
+            <div className="panel-title">Prophet ML Forecast</div>
+            <ForecastPanel />
+          </div>
+        )}
       </div>
 
       <div className="panel chat-panel">
-        <div className="panel-title">AI Market Analyst — RAG + ML</div>
+        <div className="panel-title">AI Market Analyst - RAG + ML</div>
         <div className="chat-messages">
-          {messages.map((m, i) => (
-            <div key={i} className={`message ${m.role}`}>
-              <div className="bubble">{m.text}</div>
-            </div>
-          ))}
-          {loading && <div className="loading">◆ Analyzing signals...</div>}
-          <div ref={messagesEndRef} />
+          {messages.map(function(m, i) {
+            return (
+              <div key={i} className={"message " + m.role}>
+                <div className="bubble">{m.text}</div>
+              </div>
+            );
+          })}
+          {loading && <div className="loading">Analyzing...</div>}
+          <div ref={messagesEndRef}></div>
         </div>
-        <div style={{ marginBottom: 8 }}>
-          {QUICK_QUESTIONS.map((q, i) => (
-            <button key={i} className="quick-btn" onClick={() => ask(q)}>{q}</button>
-          ))}
+        <div style={{marginBottom: 8}}>
+          {QUICK_QUESTIONS.map(function(q, i) {
+            return <button key={i} className="quick-btn" onClick={function() { ask(q); }}>{q}</button>;
+          })}
         </div>
         <div className="chat-input">
           <input
             value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && ask(input)}
+            onChange={function(e) { setInput(e.target.value); }}
+            onKeyDown={function(e) { if (e.key === "Enter") ask(input); }}
             placeholder="Ask about market signals..."
           />
-          <button onClick={() => ask(input)} disabled={loading}>Send</button>
+          <button onClick={function() { ask(input); }} disabled={loading}>Send</button>
         </div>
       </div>
     </div>
   );
 }
 
-ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
 </script>
 </body>
 </html>

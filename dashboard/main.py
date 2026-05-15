@@ -6,6 +6,8 @@ import anthropic
 import requests
 import os
 from google.cloud import bigquery
+from fastapi.responses import FileResponse
+import os
 
 app = FastAPI()
 
@@ -97,6 +99,44 @@ Be specific, cite symbols and prediction scores.
         messages=[{"role": "user", "content": req.question}]
     )
     return {"answer": response.content[0].text}
+
+@app.get("/api/forecasts/{symbol}")
+def get_forecast(symbol: str):
+    client = bigquery.Client(project=PROJECT_ID)
+    query = f"""
+        SELECT
+            symbol,
+            forecast_date,
+            predicted_close,
+            lower_bound,
+            upper_bound,
+            trend
+        FROM `{PROJECT_ID}.raw_market_data.market_data_forecasts`
+        WHERE symbol = '{symbol.upper()}'
+        ORDER BY forecast_date ASC
+    """
+    rows = client.query(query).to_dataframe()
+    return rows.to_dict(orient="records")
+
+@app.get("/api/forecast-symbols")
+def get_forecast_symbols():
+    client = bigquery.Client(project=PROJECT_ID)
+    query = """
+        SELECT DISTINCT symbol
+        FROM `financial-ai-platform-sv.raw_market_data.market_data_forecasts`
+        ORDER BY symbol
+    """
+    rows = client.query(query).result()
+    return [row["symbol"] for row in rows]
+
+
+
+
+@app.get("/")
+def serve_dashboard():
+    return FileResponse(
+        os.path.join(os.path.dirname(__file__), "index.html")
+    )
 
 @app.get("/api/health")
 def health():
