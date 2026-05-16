@@ -1,0 +1,41 @@
+name: Dataflow Market Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Pipeline mode'
+        required: true
+        default: 'batch'
+        type: choice
+        options:
+          - batch
+          - streaming
+
+jobs:
+  run-dataflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install apache-beam[gcp] google-cloud-bigquery google-cloud-pubsub
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Run Dataflow pipeline
+        run: |
+          python dataflow/market_pipeline.py ${{ github.event.inputs.mode }}
+        env:
+          GOOGLE_CLOUD_PROJECT: financial-ai-platform-sv
