@@ -8,6 +8,7 @@ import os
 from google.cloud import bigquery
 from fastapi.responses import FileResponse
 import os
+from agents.financial_agent import run_agent
 
 app = FastAPI()
 
@@ -129,15 +130,20 @@ def get_forecast_symbols():
     rows = client.query(query).result()
     return [row["symbol"] for row in rows]
 
+class AgentRequest(BaseModel):
+    question: str
 
+@app.post("/api/agent")
+def agent(req: AgentRequest):
+    result = run_agent(req.question)
+    return result
 
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
 
 @app.get("/")
 def serve_dashboard():
     return FileResponse(
         os.path.join(os.path.dirname(__file__), "index.html")
     )
-
-@app.get("/api/health")
-def health():
-    return {"status": "ok"}

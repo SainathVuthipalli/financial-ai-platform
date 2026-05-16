@@ -16,7 +16,8 @@
   .badge { background: #0f3460; color: #38bdf8; padding: 4px 10px; border-radius: 4px; font-size: 11px; border: 1px solid #1e5f8e; }
   .panel { background: #0d1117; padding: 20px; overflow-y: auto; }
   .panel-title { font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; border-bottom: 1px solid #1e293b; padding-bottom: 8px; }
-  .signal-card { background: #111827; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; margin-bottom: 10px; }
+  .signal-card { background: #111827; border: 1px solid #1e293b; border-radius: 6px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s; }
+  .signal-card:hover { border-color: #38bdf8; }
   .signal-card.bullish { border-left: 3px solid #10b981; }
   .signal-card.bearish { border-left: 3px solid #ef4444; }
   .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
@@ -26,38 +27,28 @@
   .stat { background: #0a0e1a; border-radius: 4px; padding: 6px 8px; }
   .stat-label { font-size: 9px; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
   .stat-value { font-size: 12px; color: #e2e8f0; margin-top: 2px; }
-  .green { color: #10b981; }
-  .red { color: #ef4444; }
-  .blue { color: #38bdf8; }
+  .stat-value.green { color: #10b981; }
+  .stat-value.red { color: #ef4444; }
+  .stat-value.blue { color: #38bdf8; }
   .ml-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 3px; font-size: 10px; margin-top: 8px; }
   .ml-badge.strong { background: #052e16; color: #10b981; border: 1px solid #166534; }
   .ml-badge.normal { background: #0f172a; color: #64748b; border: 1px solid #1e293b; }
-  .prob-bar { height: 3px; background: #1e293b; border-radius: 2px; margin-top: 6px; }
-  .prob-fill { height: 100%; border-radius: 2px; background: #38bdf8; }
   .chat-panel { display: flex; flex-direction: column; }
   .chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; }
   .message { margin-bottom: 16px; }
   .message.user .bubble { background: #1e3a5f; border-radius: 6px 6px 0 6px; margin-left: auto; max-width: 80%; padding: 10px 14px; font-size: 13px; color: #bae6fd; }
   .message.assistant .bubble { background: #111827; border: 1px solid #1e293b; border-radius: 6px 6px 6px 0; max-width: 90%; padding: 12px 14px; font-size: 13px; line-height: 1.6; color: #e2e8f0; white-space: pre-wrap; }
-  .tool-trace { background: #0a0e1a; border: 1px solid #1e293b; border-left: 3px solid #f59e0b; border-radius: 0 6px 6px 0; padding: 10px 12px; margin-bottom: 8px; }
-  .tool-trace-title { font-size: 9px; color: #f59e0b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-  .tool-call-row { display: flex; align-items: flex-start; gap: 8px; padding: 3px 0; font-size: 11px; }
-  .tool-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; flex-shrink: 0; margin-top: 3px; }
-  .tool-name-badge { color: #f59e0b; font-weight: 600; }
-  .tool-args-text { color: #64748b; }
-  .mode-toggle { display: flex; border: 1px solid #1e293b; border-radius: 4px; overflow: hidden; }
-  .mode-btn { padding: 6px 14px; font-size: 11px; cursor: pointer; border: none; font-family: inherit; text-transform: uppercase; letter-spacing: 1px; }
-  .mode-btn.inactive { background: #111827; color: #475569; }
-  .mode-btn.active-rag { background: #0f3460; color: #38bdf8; }
-  .mode-btn.active-agent { background: #1a1200; color: #f59e0b; }
   .chat-input { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e293b; }
   .chat-input input { flex: 1; background: #111827; border: 1px solid #1e293b; border-radius: 4px; padding: 10px 14px; color: #e2e8f0; font-family: inherit; font-size: 13px; outline: none; }
   .chat-input input:focus { border-color: #38bdf8; }
   .chat-input button { background: #1e3a5f; color: #38bdf8; border: 1px solid #1e5f8e; border-radius: 4px; padding: 10px 18px; cursor: pointer; font-family: inherit; font-size: 13px; }
+  .chat-input button:hover { background: #2d5a8e; }
   .chat-input button:disabled { opacity: 0.5; cursor: not-allowed; }
   .loading { color: #475569; font-size: 12px; padding: 8px 0; }
   .quick-btn { background: #0f172a; border: 1px solid #1e293b; border-radius: 4px; padding: 6px 12px; font-size: 11px; color: #64748b; cursor: pointer; margin: 4px 4px 4px 0; font-family: inherit; }
   .quick-btn:hover { border-color: #38bdf8; color: #38bdf8; }
+  .prob-bar { height: 3px; background: #1e293b; border-radius: 2px; margin-top: 6px; }
+  .prob-fill { height: 100%; border-radius: 2px; background: #38bdf8; }
   .tabs { display: flex; gap: 0; border-bottom: 1px solid #1e293b; margin-bottom: 16px; }
   .tab { padding: 8px 16px; font-size: 11px; color: #475569; cursor: pointer; border-bottom: 2px solid transparent; text-transform: uppercase; letter-spacing: 1px; }
   .tab.active { color: #38bdf8; border-bottom-color: #38bdf8; }
@@ -67,9 +58,6 @@
   .symbol-select { background: #111827; border: 1px solid #1e293b; border-radius: 4px; padding: 8px 12px; color: #e2e8f0; font-family: inherit; font-size: 12px; width: 100%; margin-bottom: 12px; }
   .range-bar { height: 4px; background: #1e293b; border-radius: 2px; margin-top: 4px; position: relative; }
   .range-fill { height: 100%; border-radius: 2px; background: #38bdf8; position: absolute; }
-  .abadge { padding: 2px 8px; border-radius: 3px; font-size: 10px; margin-right: 4px; margin-bottom: 6px; display: inline-block; }
-  .abadge.amber { background: #412402; color: #FAC775; border: 1px solid #633806; }
-  .abadge.green { background: #052e16; color: #10b981; border: 1px solid #166534; }
 </style>
 </head>
 <body>
@@ -82,13 +70,6 @@ const QUICK_QUESTIONS = [
   "Which stocks were bullish with high volume?",
   "What was NVDA doing recently?",
   "Which symbols look most volatile?",
-];
-
-const AGENT_QUESTIONS = [
-  "Should I watch NVDA or AMD today?",
-  "What are the top 3 bullish opportunities right now?",
-  "Compare COIN, MSTR and HOOD",
-  "Which symbol has the strongest ML signal today?",
 ];
 
 function SignalCard({ signal }) {
@@ -194,36 +175,15 @@ function ForecastPanel() {
   );
 }
 
-function ToolTrace({ toolCalls }) {
-  if (!toolCalls || toolCalls.length === 0) return null;
-  return (
-    <div className="tool-trace">
-      <div className="tool-trace-title">Agent reasoning - {toolCalls.length} tool calls</div>
-      {toolCalls.map(function(tc, i) {
-        return (
-          <div key={i} className="tool-call-row">
-            <div className="tool-dot"></div>
-            <div>
-              <span className="tool-name-badge">{tc.tool}</span>
-              <span className="tool-args-text"> ({JSON.stringify(tc.input)})</span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function App() {
   const [signals, setSignals] = React.useState([]);
   const [messages, setMessages] = React.useState([
-    {role: "assistant", text: "Welcome to Financial AI Platform. Toggle between RAG and Agent mode above.", toolCalls: null}
+    {role: "assistant", text: "Welcome to Financial AI Platform. Ask me about market signals, volume patterns, and ML predictions."}
   ]);
   const [input, setInput] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [loadingSignals, setLoadingSignals] = React.useState(true);
   const [activeTab, setActiveTab] = React.useState("signals");
-  const [mode, setMode] = React.useState("rag");
   const messagesEndRef = React.useRef(null);
 
   React.useEffect(function() {
@@ -241,49 +201,46 @@ function App() {
 
   function ask(question) {
     if (!question.trim() || loading) return;
-    setMessages(function(m) { return m.concat([{role: "user", text: question, toolCalls: null}]); });
+    setMessages(function(m) { return m.concat([{role: "user", text: question}]); });
     setInput("");
     setLoading(true);
-    const endpoint = mode === "agent" ? "/api/agent" : "/api/chat";
-    fetch(API + endpoint, {
+    fetch(API + "/api/chat", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({question: question})
     })
       .then(function(r) { return r.json(); })
       .then(function(data) {
-        setMessages(function(m) {
-          return m.concat([{role: "assistant", text: data.answer, toolCalls: data.tool_calls || null}]);
-        });
+        setMessages(function(m) { return m.concat([{role: "assistant", text: data.answer}]); });
         setLoading(false);
       })
       .catch(function() {
-        setMessages(function(m) { return m.concat([{role: "assistant", text: "Error connecting to backend.", toolCalls: null}]); });
+        setMessages(function(m) { return m.concat([{role: "assistant", text: "Error connecting to backend."}]); });
         setLoading(false);
       });
   }
-
-  const questions = mode === "agent" ? AGENT_QUESTIONS : QUICK_QUESTIONS;
 
   return (
     <div className="app">
       <div className="header">
         <h1>Financial AI Platform</h1>
-        <div style={{display: "flex", gap: 8, alignItems: "center"}}>
+        <div style={{display: "flex", gap: 8}}>
           <span className="badge">135 Symbols</span>
           <span className="badge">Prophet Forecasts</span>
-          <div className="mode-toggle">
-            <div className={"mode-btn " + (mode === "rag" ? "active-rag" : "inactive")} onClick={function() { setMode("rag"); }}>RAG</div>
-            <div className={"mode-btn " + (mode === "agent" ? "active-agent" : "inactive")} onClick={function() { setMode("agent"); }}>Agent</div>
-          </div>
+          <span className="badge">Claude RAG</span>
         </div>
       </div>
 
       <div className="panel">
         <div className="tabs">
-          <div className={"tab " + (activeTab === "signals" ? "active" : "")} onClick={function() { setActiveTab("signals"); }}>Live Signals</div>
-          <div className={"tab " + (activeTab === "forecast" ? "active" : "")} onClick={function() { setActiveTab("forecast"); }}>7-Day Forecast</div>
+          <div className={"tab " + (activeTab === "signals" ? "active" : "")} onClick={function() { setActiveTab("signals"); }}>
+            Live Signals
+          </div>
+          <div className={"tab " + (activeTab === "forecast" ? "active" : "")} onClick={function() { setActiveTab("forecast"); }}>
+            7-Day Forecast
+          </div>
         </div>
+
         {activeTab === "signals" && (
           <div>
             <div className="panel-title">{signals.length} signals from BigQuery</div>
@@ -291,6 +248,7 @@ function App() {
             {signals.map(function(s, i) { return <SignalCard key={i} signal={s} />; })}
           </div>
         )}
+
         {activeTab === "forecast" && (
           <div>
             <div className="panel-title">Prophet ML Forecast</div>
@@ -300,33 +258,20 @@ function App() {
       </div>
 
       <div className="panel chat-panel">
-        <div className="panel-title">
-          {mode === "agent" ? "Autonomous Agent - 5 Tools" : "RAG Analyst - Claude + BigQuery"}
-        </div>
+        <div className="panel-title">AI Market Analyst - RAG + ML</div>
         <div className="chat-messages">
           {messages.map(function(m, i) {
             return (
               <div key={i} className={"message " + m.role}>
-                {m.toolCalls && m.toolCalls.length > 0 && (
-                  <div>
-                    <span className="abadge amber">{m.toolCalls.length} tools called</span>
-                    <span className="abadge green">Agent mode</span>
-                    <ToolTrace toolCalls={m.toolCalls} />
-                  </div>
-                )}
                 <div className="bubble">{m.text}</div>
               </div>
             );
           })}
-          {loading && (
-            <div className="loading">
-              {mode === "agent" ? "Agent reasoning and calling tools..." : "Analyzing signals..."}
-            </div>
-          )}
+          {loading && <div className="loading">Analyzing...</div>}
           <div ref={messagesEndRef}></div>
         </div>
         <div style={{marginBottom: 8}}>
-          {questions.map(function(q, i) {
+          {QUICK_QUESTIONS.map(function(q, i) {
             return <button key={i} className="quick-btn" onClick={function() { ask(q); }}>{q}</button>;
           })}
         </div>
@@ -335,7 +280,7 @@ function App() {
             value={input}
             onChange={function(e) { setInput(e.target.value); }}
             onKeyDown={function(e) { if (e.key === "Enter") ask(input); }}
-            placeholder={mode === "agent" ? "Ask the agent anything..." : "Ask about market signals..."}
+            placeholder="Ask about market signals..."
           />
           <button onClick={function() { ask(input); }} disabled={loading}>Send</button>
         </div>
