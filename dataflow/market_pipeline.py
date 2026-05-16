@@ -7,7 +7,7 @@ import sys
 from datetime import datetime, timezone
 
 PROJECT_ID = "financial-ai-platform-sv"
-REGION = "us-central1"
+REGION = "us-east1"
 PUBSUB_TOPIC = f"projects/{PROJECT_ID}/topics/market-data-stream"
 BQ_TABLE = f"{PROJECT_ID}:raw_market_data.market_data_raw"
 TEMP_LOCATION = f"gs://{PROJECT_ID}-data-lake/temp"
