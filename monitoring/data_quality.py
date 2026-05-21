@@ -66,13 +66,13 @@ def run_quality_checks(df: pd.DataFrame):
         "message": f"Missing symbols: {missing if missing else 'None'}"
     }
 
-    # Check 6: Volume > 0
+    # Check 6: Volume > 0 (warn if small number, fail if widespread)
     zero_volume = (df["volume"] <= 0).sum()
     results["zero_volume"] = {
-        "value": zero_volume,
-        "passed": zero_volume == 0,
-        "message": f"Zero volume rows: {zero_volume}"
-    }
+    "value": zero_volume,
+    "passed": zero_volume <= 10,  # allow up to 10 zero volume rows (normal for holidays/halts)
+    "message": f"Zero volume rows: {zero_volume}"
+}
 
     # Check 7: Price range sanity (high >= low)
     invalid_range = (df["high"] < df["low"]).sum()
